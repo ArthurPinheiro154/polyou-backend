@@ -6,13 +6,13 @@ from sqlalchemy import (
     DateTime,
     Date,
     Boolean,
-    func,
     Enum as SQLEnum,
 )
-import datetime
 from typing import List, Optional
 from enum import Enum
+from datetime import datetime, timezone
 
+from ..core.utc_safe import utcnow
 
 # =========================================================
 # Base
@@ -39,19 +39,18 @@ class User(PolyouDB):
     )
 
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-
     disabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    created_at: Mapped[datetime.datetime] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
+        default=utcnow,
         nullable=False
     )
 
-    updated_at: Mapped[datetime.datetime] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=utcnow,
+        onupdate=utcnow,
         nullable=False
     )
 
@@ -202,16 +201,16 @@ class Flashcard(PolyouDB):
         nullable=False
     )
 
-    created_at: Mapped[datetime.datetime] = mapped_column(
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
+        default=utcnow,
         nullable=False
     )
 
-    updated_at: Mapped[datetime.datetime] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
+        default=utcnow,
+        onupdate=utcnow,
         nullable=False
     )
 
@@ -241,6 +240,7 @@ class Flashcard(PolyouDB):
         back_populates="flashcard",
         cascade="all, delete-orphan"
     )
+
 
 class FlashcardContent(PolyouDB):
     __tablename__ = "flashcards_content"
@@ -275,15 +275,24 @@ class FlashcardReviewFSRS(PolyouDB):
         primary_key=True
     )
 
-    stability: Mapped[float] = mapped_column(nullable=False)
-    difficulty: Mapped[float] = mapped_column(nullable=False)
+    stability: Mapped[float] = mapped_column(nullable=False, default=0.0)
+    difficulty: Mapped[float] = mapped_column(nullable=False, default=5.0)
 
-    due: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    last_review: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    due: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        nullable=False
+    )
+
+    last_review: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
 
     state: Mapped[FSRSStates] = mapped_column(
         SQLEnum(FSRSStates),
-        nullable=False
+        nullable=False,
+        default=FSRSStates.NEW
     )
 
     flashcard: Mapped["Flashcard"] = relationship(back_populates="fsrs")
@@ -302,6 +311,7 @@ class FlashcardsStatistics(PolyouDB):
 
     flashcard: Mapped["Flashcard"] = relationship(back_populates="statistics")
 
+
 # =========================================================
 # Images
 # =========================================================
@@ -317,10 +327,10 @@ class FlashcardsImages(PolyouDB):
     )
 
     field: Mapped[Fields] = mapped_column(SQLEnum(Fields), nullable=False)
-
     image_url: Mapped[str] = mapped_column(String, nullable=False)
 
     flashcard: Mapped["Flashcard"] = relationship(back_populates="images")
+
 
 # =========================================================
 # Create / Drop (opcional)
