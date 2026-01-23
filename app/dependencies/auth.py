@@ -42,7 +42,7 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Annotate
     
     return user
 
-def get_active_user(current_user: Annotated[UserIdentity, Depends(get_current_user)]):
+def get_active_user(current_user: Annotated[UserIdentity, Depends(get_current_user)]) -> UserIdentity:
     if current_user.disabled:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inative user")
     return current_user

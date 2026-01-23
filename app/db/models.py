@@ -61,17 +61,17 @@ class User(PolyouDB):
         cascade="all, delete-orphan"
     )
 
-    known_languages: Mapped[List["UserKnownLanguages"]] = relationship(
+    known_languages: Mapped[List["UserKnownLanguage"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan"
     )
 
-    target_languages: Mapped[List["UserTargetLanguages"]] = relationship(
+    target_languages: Mapped[List["UserTargetLanguage"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan"
     )
 
-    flashcards: Mapped[List["Flashcards"]] = relationship(
+    flashcards: Mapped[List["Flashcard"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan"
     )
@@ -96,19 +96,19 @@ class UserProfile(PolyouDB):
 # Languages
 # =========================================================
 
-class Languages(PolyouDB):
+class Language(PolyouDB):
     __tablename__ = "languages"
 
     language_id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     iso_639_1: Mapped[str] = mapped_column(String(2), nullable=False, unique=True)
 
-    known_by_users: Mapped[List["UserKnownLanguages"]] = relationship(back_populates="language")
-    target_by_users: Mapped[List["UserTargetLanguages"]] = relationship(back_populates="language")
-    flashcards: Mapped[List["Flashcards"]] = relationship(back_populates="language")
+    known_by_users: Mapped[List["UserKnownLanguage"]] = relationship(back_populates="language")
+    target_by_users: Mapped[List["UserTargetLanguage"]] = relationship(back_populates="language")
+    flashcards: Mapped[List["Flashcard"]] = relationship(back_populates="language")
 
 
-class UserKnownLanguages(PolyouDB):
+class UserKnownLanguage(PolyouDB):
     __tablename__ = "user_known_languages"
 
     user_id: Mapped[int] = mapped_column(
@@ -122,32 +122,32 @@ class UserKnownLanguages(PolyouDB):
     )
 
     user: Mapped["User"] = relationship(back_populates="known_languages")
-    language: Mapped["Languages"] = relationship(back_populates="known_by_users")
+    language: Mapped["Language"] = relationship(back_populates="known_by_users")
 
 
 # =========================================================
 # Target Languages / Goals / Levels
 # =========================================================
 
-class CEFRLevels(PolyouDB):
+class CEFRLevel(PolyouDB):
     __tablename__ = "cefr_levels"
 
     level_id: Mapped[int] = mapped_column(primary_key=True)
     level: Mapped[str] = mapped_column(String(2), nullable=False, unique=True)
 
-    user_targets: Mapped[List["UserTargetLanguages"]] = relationship(back_populates="level")
+    user_targets: Mapped[List["UserTargetLanguage"]] = relationship(back_populates="level")
 
 
-class Goals(PolyouDB):
+class Goal(PolyouDB):
     __tablename__ = "goals"
 
     goal_id: Mapped[int] = mapped_column(primary_key=True)
     goal: Mapped[str] = mapped_column(String, nullable=False, unique=True)
 
-    user_targets: Mapped[List["UserTargetLanguages"]] = relationship(back_populates="goal")
+    user_targets: Mapped[List["UserTargetLanguage"]] = relationship(back_populates="goal")
 
 
-class UserTargetLanguages(PolyouDB):
+class UserTargetLanguage(PolyouDB):
     __tablename__ = "user_target_languages"
 
     user_id: Mapped[int] = mapped_column(
@@ -166,9 +166,9 @@ class UserTargetLanguages(PolyouDB):
     priority: Mapped[int] = mapped_column(SmallInteger, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="target_languages")
-    language: Mapped["Languages"] = relationship(back_populates="target_by_users")
-    level: Mapped["CEFRLevels"] = relationship(back_populates="user_targets")
-    goal: Mapped["Goals"] = relationship(back_populates="user_targets")
+    language: Mapped["Language"] = relationship(back_populates="target_by_users")
+    level: Mapped["CEFRLevel"] = relationship(back_populates="user_targets")
+    goal: Mapped["Goal"] = relationship(back_populates="user_targets")
 
 
 # =========================================================
@@ -180,17 +180,17 @@ class Fields(Enum):
     back = "back"
 
 
-class FlashcardTypes(PolyouDB):
+class FlashcardType(PolyouDB):
     __tablename__ = "flashcard_types"
 
     flashcard_type_id: Mapped[int] = mapped_column(primary_key=True)
     type: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String)
 
-    flashcards: Mapped[List["Flashcards"]] = relationship(back_populates="flashcard_type")
+    flashcards: Mapped[List["Flashcard"]] = relationship(back_populates="flashcard_type")
 
 
-class Flashcards(PolyouDB):
+class Flashcard(PolyouDB):
     __tablename__ = "flashcards"
 
     flashcard_id: Mapped[int] = mapped_column(primary_key=True)
@@ -216,16 +216,16 @@ class Flashcards(PolyouDB):
     )
 
     user: Mapped["User"] = relationship(back_populates="flashcards")
-    language: Mapped["Languages"] = relationship(back_populates="flashcards")
-    flashcard_type: Mapped["FlashcardTypes"] = relationship(back_populates="flashcards")
+    language: Mapped["Language"] = relationship(back_populates="flashcards")
+    flashcard_type: Mapped["FlashcardType"] = relationship(back_populates="flashcards")
 
-    content: Mapped["FlashcardsContent"] = relationship(
+    content: Mapped["FlashcardContent"] = relationship(
         back_populates="flashcard",
         uselist=False,
         cascade="all, delete-orphan"
     )
 
-    fsrs: Mapped["FlashcardsReviewFSRS"] = relationship(
+    fsrs: Mapped["FlashcardReviewFSRS"] = relationship(
         back_populates="flashcard",
         uselist=False,
         cascade="all, delete-orphan"
@@ -242,13 +242,7 @@ class Flashcards(PolyouDB):
         cascade="all, delete-orphan"
     )
 
-    review_history: Mapped[List["FlashcardReviewHistory"]] = relationship(
-        back_populates="flashcard",
-        cascade="all, delete-orphan"
-    )
-
-
-class FlashcardsContent(PolyouDB):
+class FlashcardContent(PolyouDB):
     __tablename__ = "flashcards_content"
 
     flashcard_id: Mapped[int] = mapped_column(
@@ -259,7 +253,7 @@ class FlashcardsContent(PolyouDB):
     front_field_content: Mapped[str] = mapped_column(String, nullable=False)
     back_field_content: Mapped[Optional[str]] = mapped_column(String)
 
-    flashcard: Mapped["Flashcards"] = relationship(back_populates="content")
+    flashcard: Mapped["Flashcard"] = relationship(back_populates="content")
 
 
 # =========================================================
@@ -273,7 +267,7 @@ class FSRSStates(Enum):
     RELEARNING = 3
 
 
-class FlashcardsReviewFSRS(PolyouDB):
+class FlashcardReviewFSRS(PolyouDB):
     __tablename__ = "flashcards_review_fsrs"
 
     flashcard_id: Mapped[int] = mapped_column(
@@ -285,14 +279,14 @@ class FlashcardsReviewFSRS(PolyouDB):
     difficulty: Mapped[float] = mapped_column(nullable=False)
 
     due: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    last_review: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_review: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     state: Mapped[FSRSStates] = mapped_column(
         SQLEnum(FSRSStates),
         nullable=False
     )
 
-    flashcard: Mapped["Flashcards"] = relationship(back_populates="fsrs")
+    flashcard: Mapped["Flashcard"] = relationship(back_populates="fsrs")
 
 
 class FlashcardsStatistics(PolyouDB):
@@ -306,28 +300,7 @@ class FlashcardsStatistics(PolyouDB):
     repetitions: Mapped[int] = mapped_column(nullable=False, default=0)
     lapses: Mapped[int] = mapped_column(nullable=False, default=0)
 
-    flashcard: Mapped["Flashcards"] = relationship(back_populates="statistics")
-
-
-class FlashcardReviewHistory(PolyouDB):
-    __tablename__ = "flashcard_review_history"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-
-    flashcard_id: Mapped[int] = mapped_column(
-        ForeignKey("flashcards.flashcard_id"),
-        nullable=False
-    )
-
-    reviewed_at: Mapped[datetime.datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
-
-    rating: Mapped[int] = mapped_column(nullable=False)
-
-    flashcard: Mapped["Flashcards"] = relationship(back_populates="review_history")
-
+    flashcard: Mapped["Flashcard"] = relationship(back_populates="statistics")
 
 # =========================================================
 # Images
@@ -347,7 +320,7 @@ class FlashcardsImages(PolyouDB):
 
     image_url: Mapped[str] = mapped_column(String, nullable=False)
 
-    flashcard: Mapped["Flashcards"] = relationship(back_populates="images")
+    flashcard: Mapped["Flashcard"] = relationship(back_populates="images")
 
 # =========================================================
 # Create / Drop (opcional)

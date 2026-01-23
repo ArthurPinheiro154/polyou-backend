@@ -2,10 +2,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from ...schemas.languages import AvailableLanguage
-from ...db.models import Languages
+from ...db.models import Language
 
 def get_available_languages(db: Session) -> list[AvailableLanguage]:
-    stmt = select(Languages)
+    stmt = select(Language)
     query_languages = db.execute(stmt).scalars().all()
     
     languages = [

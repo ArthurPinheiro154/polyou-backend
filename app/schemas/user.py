@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import date
 from .languages import KnownLanguageCreate, TargetLanguagesCreate
-from datetime import datetime
 
 class UserIdentity(BaseModel):
     user_id: int

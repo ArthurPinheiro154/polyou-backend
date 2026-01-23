@@ -3,17 +3,17 @@ from sqlalchemy import select
 from pydantic import EmailStr
 
 from ...schemas.user import UserCreate, UserCredentials, UserIdentity
-from ...db.models import User, UserProfile, UserKnownLanguages, UserTargetLanguages
+from ...db.models import User, UserProfile, UserKnownLanguage, UserTargetLanguage
 
 def create_user(db: Session, user_create: UserCreate) -> User:
     user = User(
         **user_create.credentials.model_dump(),
         profile = UserProfile(**user_create.profile.model_dump()),
         known_languages = [
-            UserKnownLanguages(**lang.model_dump()) for lang in user_create.known_languages
+            UserKnownLanguage(**lang.model_dump()) for lang in user_create.known_languages
         ],
         target_languages = [
-            UserTargetLanguages(**lang.model_dump()) for lang in user_create.target_languages
+            UserTargetLanguage(**lang.model_dump()) for lang in user_create.target_languages
         ]
     )
 
