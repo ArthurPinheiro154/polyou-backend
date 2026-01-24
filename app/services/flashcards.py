@@ -5,7 +5,7 @@ from ..schemas.flashcards import FlashcardReviewFSRS, StateEnum, RatingEnum
 from ..core.utc_safe import utcnow
 from ..core.config import DEFAULT_FSRS_CONFIG
 
-scheduler = Scheduler(desired_retention=0.95)
+scheduler = Scheduler(desired_retention=DEFAULT_FSRS_CONFIG.DESIRED_RETENTION)
 
 def map_rating(rating: RatingEnum) -> Rating:
     return {
@@ -21,7 +21,6 @@ FSRS_STATE_MAP = {
 }
 
 REVERSE_STATE_MAP = {v: k for k, v in FSRS_STATE_MAP.items()}
-
 
 def review_card(old_flashcard: FlashcardReviewFSRS, rating: RatingEnum) -> FlashcardReviewFSRS:
     now = utcnow()

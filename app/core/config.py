@@ -24,5 +24,6 @@ class FSRSConfig:
     LEARNING_STABILITY_INCREMENT: float = 2.0
     
     MINIMUM_REVIEW_INTERVAL: timedelta = timedelta(days=1)
+    DESIRED_RETENTION: float = 0.95
 
 DEFAULT_FSRS_CONFIG = FSRSConfig()

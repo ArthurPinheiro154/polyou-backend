@@ -10,49 +10,42 @@ from sqlalchemy import (
 )
 from typing import List, Optional
 from enum import Enum
-from datetime import datetime, timezone
+from datetime import datetime
 
 from ..core.utc_safe import utcnow
 
 # =========================================================
 # Base
 # =========================================================
-
 class PolyouDB(DeclarativeBase):
     pass
+
+# =========================================================
+# Enums
+# =========================================================
+class Fields(Enum):
+    front = "front"
+    back = "back"
+
+
+class FSRSStates(int, Enum):
+    LEARNING = 1
+    REVIEW = 2
+    RELEARNING = 3
 
 
 # =========================================================
 # Users
 # =========================================================
-
 class User(PolyouDB):
     __tablename__ = "users"
 
     user_id: Mapped[int] = mapped_column(primary_key=True)
-
-    email: Mapped[str] = mapped_column(
-        String(255),
-        unique=True,
-        nullable=False,
-        index=True
-    )
-
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     disabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=utcnow,
-        nullable=False
-    )
-
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=utcnow,
-        onupdate=utcnow,
-        nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
 
     profile: Mapped["UserProfile"] = relationship(
         back_populates="user",
@@ -80,10 +73,9 @@ class UserProfile(PolyouDB):
     __tablename__ = "users_profile"
 
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.user_id"),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         primary_key=True
     )
-
     first_name: Mapped[str] = mapped_column(String(30), nullable=False)
     last_name: Mapped[str] = mapped_column(String(30), nullable=False)
     birth: Mapped[Optional[datetime.date]] = mapped_column(Date)
@@ -94,7 +86,6 @@ class UserProfile(PolyouDB):
 # =========================================================
 # Languages
 # =========================================================
-
 class Language(PolyouDB):
     __tablename__ = "languages"
 
@@ -111,12 +102,11 @@ class UserKnownLanguage(PolyouDB):
     __tablename__ = "user_known_languages"
 
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.user_id"),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         primary_key=True
     )
-
     language_id: Mapped[int] = mapped_column(
-        ForeignKey("languages.language_id"),
+        ForeignKey("languages.language_id", ondelete="CASCADE"),
         primary_key=True
     )
 
@@ -127,7 +117,6 @@ class UserKnownLanguage(PolyouDB):
 # =========================================================
 # Target Languages / Goals / Levels
 # =========================================================
-
 class CEFRLevel(PolyouDB):
     __tablename__ = "cefr_levels"
 
@@ -150,18 +139,15 @@ class UserTargetLanguage(PolyouDB):
     __tablename__ = "user_target_languages"
 
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.user_id"),
+        ForeignKey("users.user_id", ondelete="CASCADE"),
         primary_key=True
     )
-
     language_id: Mapped[int] = mapped_column(
-        ForeignKey("languages.language_id"),
+        ForeignKey("languages.language_id", ondelete="CASCADE"),
         primary_key=True
     )
-
     level_id: Mapped[int] = mapped_column(ForeignKey("cefr_levels.level_id"), nullable=False)
     goal_id: Mapped[int] = mapped_column(ForeignKey("goals.goal_id"), nullable=False)
-
     priority: Mapped[int] = mapped_column(SmallInteger, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="target_languages")
@@ -173,12 +159,6 @@ class UserTargetLanguage(PolyouDB):
 # =========================================================
 # Flashcards
 # =========================================================
-
-class Fields(Enum):
-    front = "front"
-    back = "back"
-
-
 class FlashcardType(PolyouDB):
     __tablename__ = "flashcard_types"
 
@@ -193,26 +173,11 @@ class Flashcard(PolyouDB):
     __tablename__ = "flashcards"
 
     flashcard_id: Mapped[int] = mapped_column(primary_key=True)
-
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
     language_id: Mapped[int] = mapped_column(ForeignKey("languages.language_id"), nullable=False)
-    flashcard_type_id: Mapped[int] = mapped_column(
-        ForeignKey("flashcard_types.flashcard_type_id"),
-        nullable=False
-    )
-
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=utcnow,
-        nullable=False
-    )
-
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=utcnow,
-        onupdate=utcnow,
-        nullable=False
-    )
+    flashcard_type_id: Mapped[int] = mapped_column(ForeignKey("flashcard_types.flashcard_type_id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="flashcards")
     language: Mapped["Language"] = relationship(back_populates="flashcards")
@@ -221,24 +186,25 @@ class Flashcard(PolyouDB):
     content: Mapped["FlashcardContent"] = relationship(
         back_populates="flashcard",
         uselist=False,
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        passive_deletes=True
     )
-
     fsrs: Mapped["FlashcardFSRS"] = relationship(
         back_populates="flashcard",
         uselist=False,
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        passive_deletes=True
     )
-
     statistics: Mapped["FlashcardsStatistics"] = relationship(
         back_populates="flashcard",
         uselist=False,
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        passive_deletes=True
     )
-
     images: Mapped[List["FlashcardsImages"]] = relationship(
         back_populates="flashcard",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        passive_deletes=True
     )
 
 
@@ -246,94 +212,72 @@ class FlashcardContent(PolyouDB):
     __tablename__ = "flashcards_content"
 
     flashcard_id: Mapped[int] = mapped_column(
-        ForeignKey("flashcards.flashcard_id"),
+        ForeignKey("flashcards.flashcard_id", ondelete="CASCADE"),
         primary_key=True
     )
-
     front_field_content: Mapped[str] = mapped_column(String, nullable=False)
     back_field_content: Mapped[Optional[str]] = mapped_column(String)
 
-    flashcard: Mapped["Flashcard"] = relationship(back_populates="content")
-
-
-# =========================================================
-# FSRS
-# =========================================================
-
-class FSRSStates(int, Enum):
-    LEARNING = 1
-    REVIEW = 2
-    RELEARNING = 3
+    flashcard: Mapped["Flashcard"] = relationship(
+        back_populates="content",
+        passive_deletes=True
+    )
 
 
 class FlashcardFSRS(PolyouDB):
     __tablename__ = "flashcards_fsrs"
 
     flashcard_id: Mapped[int] = mapped_column(
-        ForeignKey("flashcards.flashcard_id"),
+        ForeignKey("flashcards.flashcard_id", ondelete="CASCADE"),
         primary_key=True
     )
-
-    stability: Mapped[float] = mapped_column(nullable=False, default=0.0)
+    stability: Mapped[float] = mapped_column(nullable=False, default=0.3)
     difficulty: Mapped[float] = mapped_column(nullable=False, default=5.0)
+    due: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    last_review: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    state: Mapped[FSRSStates] = mapped_column(SQLEnum(FSRSStates), nullable=False, default=FSRSStates.LEARNING)
 
-    due: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=utcnow,
-        nullable=False
+    flashcard: Mapped["Flashcard"] = relationship(
+        back_populates="fsrs",
+        passive_deletes=True
     )
-
-    last_review: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True
-    )
-
-    state: Mapped[FSRSStates] = mapped_column(
-        SQLEnum(FSRSStates),
-        nullable=False,
-        default=FSRSStates.LEARNING
-    )
-
-    flashcard: Mapped["Flashcard"] = relationship(back_populates="fsrs")
 
 
 class FlashcardsStatistics(PolyouDB):
     __tablename__ = "flashcards_statistics"
 
     flashcard_id: Mapped[int] = mapped_column(
-        ForeignKey("flashcards.flashcard_id"),
+        ForeignKey("flashcards.flashcard_id", ondelete="CASCADE"),
         primary_key=True
     )
-
     repetitions: Mapped[int] = mapped_column(nullable=False, default=0)
     lapses: Mapped[int] = mapped_column(nullable=False, default=0)
 
-    flashcard: Mapped["Flashcard"] = relationship(back_populates="statistics")
+    flashcard: Mapped["Flashcard"] = relationship(
+        back_populates="statistics",
+        passive_deletes=True
+    )
 
-
-# =========================================================
-# Images
-# =========================================================
 
 class FlashcardsImages(PolyouDB):
     __tablename__ = "flashcards_images"
 
     image_id: Mapped[int] = mapped_column(primary_key=True)
-
     flashcard_id: Mapped[int] = mapped_column(
-        ForeignKey("flashcards.flashcard_id"),
+        ForeignKey("flashcards.flashcard_id", ondelete="CASCADE"),
         nullable=False
     )
-
     field: Mapped[Fields] = mapped_column(SQLEnum(Fields), nullable=False)
     image_url: Mapped[str] = mapped_column(String, nullable=False)
 
-    flashcard: Mapped["Flashcard"] = relationship(back_populates="images")
+    flashcard: Mapped["Flashcard"] = relationship(
+        back_populates="images",
+        passive_deletes=True
+    )
 
 # =========================================================
 # Create / Drop (opcional)
 # =========================================================
-
-#from connection import engine
-#PolyouDB.metadata.create_all(engine)
-#PolyouDB.metadata.drop_all(engine)
+# from connection import engine
+# PolyouDB.metadata.create_all(engine)
+# PolyouDB.metadata.drop_all(engine)

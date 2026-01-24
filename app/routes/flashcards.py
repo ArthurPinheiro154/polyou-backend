@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import Annotated
 from sqlalchemy.orm import Session
 
 from ..schemas.user import UserIdentity
-from ..schemas.flashcards import FlashcardCreate, FlashcardTypes, RatingEnum
+from ..schemas.flashcards import FlashcardCreate, FlashcardTypes, RatingEnum, FlashcardIdentity
 from ..db.session import get_db
 from ..dependencies.auth import get_active_user
 from ..db.crud.flashcards import (
@@ -11,7 +11,8 @@ from ..db.crud.flashcards import (
     create_flashcard,
     get_flashcards_types,
     get_flashcard_fsrs,
-    update_flashcard_fsrs
+    update_flashcard_fsrs,
+    delete_flashcard
 )
 from ..services.flashcards import review_card
 
@@ -21,15 +22,19 @@ router = APIRouter(
     responses={404: {"description": "Not found"}}
 )
 
-@router.post("/create")
+@router.post("/create", response_model=list[FlashcardIdentity])
 def create_flashcard_endpoint(
     user: Annotated[UserIdentity, Depends(get_active_user)],
     db: Annotated[Session, Depends(get_db)],
     flashcards: list[FlashcardCreate]
 ):
     user_id = user.user_id
+
+    responses = []
     for flashcard in flashcards:
-        create_flashcard(db, user_id, flashcard)
+        responses.append(create_flashcard(db, user_id, flashcard))
+    
+    return [FlashcardIdentity(flashcard_id=response.flashcard_id) for response in responses]
 
 @router.get("/find", response_model=list[int])
 def find_flashcard_by_id_endpoint(
@@ -52,8 +57,10 @@ def update_flashcard_endpoint():
     pass
     
 @router.delete("/delete")
-def delete_flashcard():
-    pass
+def delete_flashcard_endpoint(user: Annotated[UserIdentity, Depends(get_active_user)], db: Annotated[Session, Depends(get_db)], flashcard_id: int):
+    user_id = user.user_id
+    result = delete_flashcard(db, user_id, flashcard_id)
+    return result
 
 @router.patch('/review')
 def review_flashcard_endpoint(user: Annotated[UserIdentity, Depends(get_active_user)], db: Annotated[Session, Depends(get_db)], flashcard_id: int, rating: RatingEnum):
@@ -61,17 +68,22 @@ def review_flashcard_endpoint(user: Annotated[UserIdentity, Depends(get_active_u
     flashcard_fsrs = get_flashcard_fsrs(db, flashcard_id, user_id)
 
     if not flashcard_fsrs:
-        return
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Flashcard ID not found."
+        )
     
     updated_flashcard = review_card(flashcard_fsrs, rating)
     
     result = update_flashcard_fsrs(db, user_id, flashcard_id, updated_flashcard)
 
-    if result:
-        return updated_flashcard
-    else:
-        return
+    if not result:
+        return HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Flashcard ID not found."
+        )
     
+    return updated_flashcard
 
 @router.get('/types', response_model=list[FlashcardTypes])
 def get_flashcard_types_endpoint(db: Annotated[Session, Depends(get_db)]):

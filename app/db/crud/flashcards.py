@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.orm import Session
 import datetime
 
@@ -106,7 +106,21 @@ def update_flashcard_fsrs(db: Session, user_id:int, flashcard_id: int, new_flash
     subquery = select(Flashcard.flashcard_id).where(Flashcard.flashcard_id == flashcard_id, Flashcard.user_id == user_id)
     stmt = update(FlashcardFSRS).where(FlashcardFSRS.flashcard_id.in_(subquery)).values(**new_flashcard_fsrs.model_dump())
 
-    result = db.execute(stmt)
-    db.commit()
+    try:
+        result = db.execute(stmt)
+        db.commit()
+        return result.rowcount == 1
+    except Exception:
+        db.rollback()
+        raise
     
-    return result.rowcount == 1
+
+def delete_flashcard(db: Session, user_id: int, flashcard_id:int) -> FlashcardIdentity:
+    stmt = delete(Flashcard).where(Flashcard.user_id == user_id, Flashcard.flashcard_id == flashcard_id)
+    try:
+        db.execute(stmt)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return FlashcardIdentity(flashcard_id=flashcard_id)
