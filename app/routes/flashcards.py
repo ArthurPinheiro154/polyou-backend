@@ -12,8 +12,10 @@ from ..db.crud.flashcards import (
     get_flashcards_types,
     get_flashcard_fsrs,
     update_flashcard_fsrs,
-    delete_flashcard
+    delete_flashcard,
+    get_flashcard_info
 )
+
 from ..services.flashcards import review_card
 
 router = APIRouter(
@@ -49,11 +51,11 @@ def find_flashcard_by_id_endpoint(
     return [flashcard_id.flashcard_id for flashcard_id in flashcards_id]
 
 @router.get("/info")
-def get_flashcard_info():
+def get_flashcard_info_endpoint(user: Annotated[UserIdentity, Depends(get_active_user)], db: Annotated[Session, Depends(get_db)], flashcard_id: int):
     pass
 
 @router.put("/update")
-def update_flashcard_endpoint():
+def update_flashcard_endpoint(user: Annotated[UserIdentity, Depends(get_active_user)], db: Annotated[Session, Depends(get_db)], flashcard_id: int, new_flashcard: FlashcardCreate):
     pass
     
 @router.delete("/delete")

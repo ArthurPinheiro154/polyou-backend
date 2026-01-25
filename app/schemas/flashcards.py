@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 from enum import Enum
 from datetime import datetime
 
-
 class FlashcardTypes(BaseModel):
     flashcard_type_id: int
     type: str
@@ -34,6 +33,11 @@ class RatingEnum(int, Enum):
     HARD = 2
     GOOD = 3
 
+class FlashcardInfo(BaseModel):
+    flashcard_id: int
+    flashcard_type_id: int
+    images: list[FlashcardImages] | None = None
+    content: FlashcardContent
 
 class FlashcardReviewFSRS(BaseModel):
     stability: float = 0.1

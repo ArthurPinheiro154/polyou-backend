@@ -3,17 +3,17 @@ from sqlalchemy import select
 from pydantic import EmailStr
 
 from ...schemas.user import UserCreate, UserCredentials, UserIdentity
-from ...db.models import User, UserProfile, UserKnownLanguage, UserTargetLanguage
+from ...db.models import UserModel, UserProfileModel, UserKnownLanguageModel, UserTargetLanguageModel
 
-def create_user(db: Session, user_create: UserCreate) -> User:
-    user = User(
+def create_user(db: Session, user_create: UserCreate) -> UserModel:
+    user = UserModel(
         **user_create.credentials.model_dump(),
-        profile = UserProfile(**user_create.profile.model_dump()),
+        profile = UserProfileModel(**user_create.profile.model_dump()),
         known_languages = [
-            UserKnownLanguage(**lang.model_dump()) for lang in user_create.known_languages
+            UserKnownLanguageModel(**lang.model_dump()) for lang in user_create.known_languages
         ],
         target_languages = [
-            UserTargetLanguage(**lang.model_dump()) for lang in user_create.target_languages
+            UserTargetLanguageModel(**lang.model_dump()) for lang in user_create.target_languages
         ]
     )
 
@@ -27,7 +27,7 @@ def create_user(db: Session, user_create: UserCreate) -> User:
         raise
 
 def get_user_credentials_by_email(db: Session, email: EmailStr) -> UserCredentials | None:
-    stmt = select(User).where(User.email == email)
+    stmt = select(UserModel).where(UserModel.email == email)
     user = db.execute(stmt).scalar_one_or_none()
 
     if not user:
@@ -39,7 +39,7 @@ def get_user_credentials_by_email(db: Session, email: EmailStr) -> UserCredentia
     )
 
 def get_user_identity_by_email(db: Session, email: EmailStr) -> UserIdentity | None:
-    stmt = select(User).where(User.email == email)
+    stmt = select(UserModel).where(UserModel.email == email)
     user = db.execute(stmt).scalar_one_or_none()
 
     if not user:
@@ -49,4 +49,3 @@ def get_user_identity_by_email(db: Session, email: EmailStr) -> UserIdentity | N
         user_id=user.user_id,
         disabled=user.disabled
     )
-    
