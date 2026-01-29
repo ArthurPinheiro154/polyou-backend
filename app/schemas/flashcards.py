@@ -56,6 +56,3 @@ class FlashcardCreate(BaseModel):
 
 class FlashcardIdentity(BaseModel):
     flashcard_id: int
-
-class FlashcardImageIdentity(BaseModel):
-    image_id: int

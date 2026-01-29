@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..schemas.user import UserLoginCredentials
 from ..schemas.tokens import Token
 
-from ..db.session import get_db
+from ..dependencies.session import get_db
 from ..services.auth import authenticate_user
 from ..core.security import create_access_token
 
@@ -40,37 +40,3 @@ def login_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()
     )
     
     return Token(access_token=access_token, token_type='bearer')
-
-'''
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"}
-    )
-
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
-    except InvalidTokenError:
-        raise credentials_exception
-
-    user = get_user(fake_users_db, username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
-
-async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-@router.get("/users/me", response_model=User)
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-):
-    return current_user
-
-'''

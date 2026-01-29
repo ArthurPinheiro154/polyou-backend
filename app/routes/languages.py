@@ -3,7 +3,7 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 
 from ..schemas.languages import AvailableLanguage
-from ..db.session import get_db
+from ..dependencies.session import get_db
 from ..db.crud.languages import get_available_languages
 
 router = APIRouter(

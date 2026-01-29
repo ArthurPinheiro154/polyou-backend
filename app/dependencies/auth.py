@@ -6,7 +6,7 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from ..db.crud.user import get_user_identity_by_email
 from ..core.security import verify_token
 from ..routes.auth import oauth2_scheme
-from ..db.session import get_db
+from .session import get_db
 from ..schemas.user import UserIdentity
 
 def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Annotated[Session, Depends(get_db)])->UserIdentity:

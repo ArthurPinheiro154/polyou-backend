@@ -10,8 +10,7 @@ from ...schemas.flashcards import (
     FlashcardReviewFSRS,
     FlashcardInfo,
     FlashcardImages,
-    FlashcardContent,
-    FlashcardImageIdentity
+    FlashcardContent
 )
 
 from ...db.models import (
@@ -153,26 +152,6 @@ def get_flashcard_info(db: Session, user_id: int, flashcard_id: int)->FlashcardI
         content=content
     )
 
-def get_flashcard_images_ids_by_flashcard_id(db: Session, flashcard_id: int, user_id: int) -> list[FlashcardImageIdentity]:
-    stmt = select(FlashcardImagesModel).join(FlashcardModel).where(FlashcardImagesModel.flashcard_id == flashcard_id, FlashcardModel.user_id == user_id)
-    results = db.execute(stmt).scalars().all()
-    
-    return [
-        FlashcardImageIdentity(image_id=result.image_id)
-        for result in results
-    ]
-
-def delete_flashcard_image_by_image_id(db: Session, image_id: int, user_id: int):
-    subquerry = select(FlashcardModel.flashcard_id).where(FlashcardModel.user_id == user_id)
-    stmt = delete(FlashcardImagesModel).where(FlashcardImagesModel.image_id == image_id, FlashcardImagesModel.flashcard_id.in_(subquerry))
-    
-    try:
-        deleted_image_id = db.execute(stmt).scalar_one_or_none()
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise
-
 def update_flashcard(db: Session, user_id: int, flashcard_id: int, new_flashcard: FlashcardCreate) -> bool:
     try:
         flashcard: FlashcardModel | None = (
@@ -210,3 +189,15 @@ def update_flashcard(db: Session, user_id: int, flashcard_id: int, new_flashcard
     except Exception:
         db.rollback()
         raise
+
+def get_flashcard_by_id(db: Session, flashcard_id: int) -> FlashcardModel | None:
+    stmt = select(FlashcardModel.flashcard_id).where(FlashcardModel.flashcard_id == flashcard_id)
+    return db.execute(stmt).scalar_one_or_none()
+
+def get_flashcard_by_id_and_user_id(db: Session, flashcard_id: int, user_id: int) -> FlashcardModel | None:
+    stmt = select(FlashcardModel).where(FlashcardModel.flashcard_id == flashcard_id, FlashcardModel.user_id == user_id)
+    return db.execute(stmt).scalar_one_or_none()
+
+def get_flashcard_type_by_id(db: Session, flashcard_type_id) -> FlashcardTypeModel | None:
+    stmt = select(FlashcardTypeModel).where(FlashcardTypeModel.flashcard_type_id == flashcard_type_id)
+    return db.execute(stmt).scalar_one_or_none()

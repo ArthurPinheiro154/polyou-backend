@@ -17,4 +17,6 @@ def get_available_languages(db: Session) -> list[AvailableLanguage]:
 
     return languages
 
-    
+def get_language_by_id(db: Session, language_id) -> LanguageModel:
+    stmt = select(LanguageModel).where(LanguageModel.language_id == language_id)
+    return db.execute(stmt).scalar_one_or_none()

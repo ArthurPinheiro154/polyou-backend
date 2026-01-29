@@ -3,7 +3,7 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 
 from ..db.crud.user import create_user
-from ..db.session import get_db
+from ..dependencies.session import get_db
 from ..schemas.user import UserRegisterInformation, UserIdentity
 from ..schemas.tokens import Token
 from ..services.users import build_user_create, email_exists
