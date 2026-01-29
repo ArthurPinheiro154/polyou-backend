@@ -10,7 +10,8 @@ from ...schemas.flashcards import (
     FlashcardReviewFSRS,
     FlashcardInfo,
     FlashcardImages,
-    FlashcardContent
+    FlashcardContent,
+    FlashcardImageIdentity
 )
 
 from ...db.models import (
@@ -18,7 +19,7 @@ from ...db.models import (
     FlashcardContentModel,
     FlashcardFSRSModel,
     FlashcardsStatisticsModel,
-    FlashcardsImagesModel,
+    FlashcardImagesModel,
     FSRSStates,
     FlashcardTypeModel
 )
@@ -54,7 +55,7 @@ def create_flashcard(db: Session, user_id: int, flashcard_create: FlashcardCreat
     if flashcard_create.images:
         for image_schema in flashcard_create.images:
             flashcard.images.append(
-                FlashcardsImagesModel(
+                FlashcardImagesModel(
                     field=image_schema.field,
                     image_url=image_schema.image_url,
                 )
@@ -151,3 +152,61 @@ def get_flashcard_info(db: Session, user_id: int, flashcard_id: int)->FlashcardI
         images= images,
         content=content
     )
+
+def get_flashcard_images_ids_by_flashcard_id(db: Session, flashcard_id: int, user_id: int) -> list[FlashcardImageIdentity]:
+    stmt = select(FlashcardImagesModel).join(FlashcardModel).where(FlashcardImagesModel.flashcard_id == flashcard_id, FlashcardModel.user_id == user_id)
+    results = db.execute(stmt).scalars().all()
+    
+    return [
+        FlashcardImageIdentity(image_id=result.image_id)
+        for result in results
+    ]
+
+def delete_flashcard_image_by_image_id(db: Session, image_id: int, user_id: int):
+    subquerry = select(FlashcardModel.flashcard_id).where(FlashcardModel.user_id == user_id)
+    stmt = delete(FlashcardImagesModel).where(FlashcardImagesModel.image_id == image_id, FlashcardImagesModel.flashcard_id.in_(subquerry))
+    
+    try:
+        deleted_image_id = db.execute(stmt).scalar_one_or_none()
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+def update_flashcard(db: Session, user_id: int, flashcard_id: int, new_flashcard: FlashcardCreate) -> bool:
+    try:
+        flashcard: FlashcardModel | None = (
+            db.query(FlashcardModel)
+            .filter(
+                FlashcardModel.flashcard_id == flashcard_id,
+                FlashcardModel.user_id == user_id
+            )
+            .one_or_none()
+        )
+
+        if flashcard is None:
+            return False
+
+        flashcard.language_id = new_flashcard.language_id
+        flashcard.flashcard_type_id = new_flashcard.flashcard_type_id
+
+        flashcard.content.front_field_content = new_flashcard.content.front_field
+        flashcard.content.back_field_content = new_flashcard.content.back_field
+
+        flashcard.images.clear()
+
+        if new_flashcard.images:
+            for image in new_flashcard.images:
+                flashcard.images.append(
+                    FlashcardImagesModel(
+                        field=image.field,
+                        image_url=image.image_url
+                    )
+                )
+
+        db.commit()
+        return True
+
+    except Exception:
+        db.rollback()
+        raise

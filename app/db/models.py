@@ -201,9 +201,9 @@ class FlashcardModel(PolyouDBModel):
         cascade="all, delete-orphan",
         passive_deletes=True
     )
-    images: Mapped[List["FlashcardsImagesModel"]] = relationship(
+    images: Mapped[List["FlashcardImagesModel"]] = relationship(
         back_populates="flashcard",
-        cascade="all, delete-orphan",
+        cascade="save-update, merge",
         passive_deletes=True
     )
 
@@ -259,7 +259,7 @@ class FlashcardsStatisticsModel(PolyouDBModel):
     )
 
 
-class FlashcardsImagesModel(PolyouDBModel):
+class FlashcardImagesModel(PolyouDBModel):
     __tablename__ = "flashcards_images"
 
     image_id: Mapped[int] = mapped_column(primary_key=True)
