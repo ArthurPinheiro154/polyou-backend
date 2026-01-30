@@ -209,6 +209,12 @@ class FlashcardModel(PolyouDB):
         passive_deletes=True
     )
 
+    audios: Mapped[List["FlashcardAudiosModel"]] = relationship(
+        back_populates="flashcard",
+        cascade="save-update, merge",
+        passive_deletes=True
+    )
+
 
 class FlashcardContentModel(PolyouDB):
     __tablename__ = "flashcards_content"
@@ -290,6 +296,24 @@ class FlashcardImagesModel(PolyouDB):
     )
     field: Mapped[Fields] = mapped_column(SQLEnum(Fields), nullable=False)
     image_url: Mapped[str] = mapped_column(String, nullable=False)
+
+    flashcard: Mapped["FlashcardModel"] = relationship(
+        back_populates="images",
+        passive_deletes=True
+    )
+
+class FlashcardAudiosModel(PolyouDB):
+    __tablename__ = "flashcards_audios"
+
+    audio_id: Mapped[int] = mapped_column(primary_key=True)
+    
+    flashcard_id: Mapped[int] = mapped_column(
+        ForeignKey("flashcards.flashcard_id", ondelete="CASCADE"),
+        nullable=False
+    )
+    
+    field: Mapped[Fields] = mapped_column(SQLEnum(Fields), nullable=False)
+    audio_url: Mapped[str] = mapped_column(String, nullable=False)
 
     flashcard: Mapped["FlashcardModel"] = relationship(
         back_populates="images",
