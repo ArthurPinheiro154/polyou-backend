@@ -205,13 +205,13 @@ class FlashcardModel(PolyouDB):
 
     images: Mapped[List["FlashcardImagesModel"]] = relationship(
         back_populates="flashcard",
-        cascade="save-update, merge",
+        cascade="all, delete-orphan",
         passive_deletes=True
     )
 
     audios: Mapped[List["FlashcardAudiosModel"]] = relationship(
         back_populates="flashcard",
-        cascade="save-update, merge",
+        cascade="all, delete-orphan",
         passive_deletes=True
     )
 
@@ -316,7 +316,7 @@ class FlashcardAudiosModel(PolyouDB):
     audio_url: Mapped[str] = mapped_column(String, nullable=False)
 
     flashcard: Mapped["FlashcardModel"] = relationship(
-        back_populates="images",
+        back_populates="audios",
         passive_deletes=True
     )
 

@@ -9,7 +9,8 @@ from ...schemas.flashcards import (
     FlashcardTypes, 
     FlashcardReviewFSRS,
     FlashcardInfo,
-    FlashcardImages,
+    FlashcardImage,
+    FlashcardAudio,
     FlashcardContent
 )
 
@@ -17,10 +18,10 @@ from ...db.models import (
     FlashcardModel,
     FlashcardContentModel,
     FlashcardFSRSModel,
-    FlashcardsStatisticsModel,
     FlashcardImagesModel,
     FSRSStates,
-    FlashcardTypeModel
+    FlashcardTypeModel,
+    FlashcardAudiosModel
 )
 
 def create_flashcard(db: Session, user_id: int, flashcard_create: FlashcardCreate) -> FlashcardModel:
@@ -37,18 +38,12 @@ def create_flashcard(db: Session, user_id: int, flashcard_create: FlashcardCreat
         state=FSRSStates.LEARNING,
     )
 
-    statistics = FlashcardsStatisticsModel(
-        repetitions=0,
-        lapses=0,
-    )
-
     flashcard = FlashcardModel(
         user_id=user_id,
         language_id=flashcard_create.language_id,
         flashcard_type_id=flashcard_create.flashcard_type_id,
         content=content,
-        fsrs=fsrs,
-        statistics=statistics,
+        fsrs=fsrs
     )
 
     if flashcard_create.images:
@@ -59,6 +54,15 @@ def create_flashcard(db: Session, user_id: int, flashcard_create: FlashcardCreat
                     image_url=image_schema.image_url,
                 )
             )
+
+    if flashcard_create.audios:
+        for audio_schema in flashcard_create.audios:
+            flashcard.audios.append(
+                FlashcardAudiosModel(
+                    field=audio_schema.field,
+                    audio_url=audio_schema.audio_url,
+                )
+            )        
 
     db.add(flashcard)
     db.commit()
@@ -141,14 +145,15 @@ def get_flashcard_info(db: Session, user_id: int, flashcard_id: int)->FlashcardI
     if not flashcard:
         return None
     
-    images = [FlashcardImages(field=image.field, image_url=image.image_url) for image in flashcard.images]
-
+    images = [FlashcardImage(field=image.field, image_url=image.image_url) for image in flashcard.images]
+    audios = [FlashcardAudio(field=audio.field, audio_url=audio.audio_url) for audio in flashcard.audios]
     content = FlashcardContent(front_field=flashcard.content.front_field_content, back_field=flashcard.content.back_field_content)
 
     return FlashcardInfo(
         flashcard_id=flashcard.flashcard_id,
         flashcard_type_id=flashcard.flashcard_type_id,
         images= images,
+        audios= audios,
         content=content
     )
 
@@ -173,6 +178,7 @@ def update_flashcard(db: Session, user_id: int, flashcard_id: int, new_flashcard
         flashcard.content.back_field_content = new_flashcard.content.back_field
 
         flashcard.images.clear()
+        flashcard.audios.clear()
 
         if new_flashcard.images:
             for image in new_flashcard.images:

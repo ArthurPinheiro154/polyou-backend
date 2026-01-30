@@ -13,9 +13,13 @@ class FieldsEnum(str, Enum):
     back = "back"
 
 
-class FlashcardImages(BaseModel):
+class FlashcardImage(BaseModel):
     field: FieldsEnum
     image_url: str
+
+class FlashcardAudio(BaseModel):
+    field: FieldsEnum
+    audio_url: str
 
 
 class FlashcardContent(BaseModel):
@@ -36,7 +40,8 @@ class RatingEnum(int, Enum):
 class FlashcardInfo(BaseModel):
     flashcard_id: int
     flashcard_type_id: int
-    images: list[FlashcardImages] | None = None
+    images: list[FlashcardImage] | None = None
+    audios: list[FlashcardAudio]
     content: FlashcardContent
 
 class FlashcardReviewFSRS(BaseModel):
@@ -50,7 +55,8 @@ class FlashcardCreate(BaseModel):
     language_id: int
     flashcard_type_id: int
 
-    images: list[FlashcardImages] | None = None
+    images: list[FlashcardImage] | None = None
+    audios: list[FlashcardAudio] | None = None
     content: FlashcardContent
 
 
